@@ -13,3 +13,11 @@ Source Code
 また、ゲーム内で使用されない部分もいくつか表示されます。
 ゲームのスプライトは無料で入手できますが、ゲームをリメイクすることもできます。
 RPGツクールVXAceという非常に古いエンジンです。
+
+ゲームテスター
+りくしぃ : https://twitter.com/kotiriku5437 (日本語版)
+開発者古い
+Siauw Adhie 「シアオ アディ」 https://twitter.com/siauwadhie (英語)
+現在
+みるくちゃん https://twitter.com/Milkchan_NobiXP (タイ語版)
+
