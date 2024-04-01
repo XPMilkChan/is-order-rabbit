@@ -1,0 +1,11 @@
+class Window_Base < Window
+  #--------------------------------------------------------------------------
+  # ● 文字の処理
+  #--------------------------------------------------------------------------
+  alias textse_process_character process_character
+  def process_character(*args)
+    textse_process_character(*args)
+    RPG::SE.new("sfx-bip", 50, 80+rand(41)).play if $game_message.busy? and !@show_fast
+  end
+  
+end

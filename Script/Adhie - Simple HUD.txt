@@ -1,0 +1,244 @@
+module ADHIE
+  module SIMPLE_HUD
+    SWITCH_SHOW_HUD = 0
+    DEFAULT_SHOW = true
+    SHOW_FACE  = false
+    SHOW_HP    = false
+    SHOW_MP    = true
+    SHOW_RES   = false
+    SHOW_ICONS = true
+    FIX_POSITIONS = {
+    :base => [0, 0],
+    0 => nil, #face
+    1 => nil, # hp
+    2 => [36, 64], #mp
+    3 => nil, # res
+    4 => nil, #icons
+    }
+    HIDE_WHEN_FULL = true
+  end
+end
+
+module DataManager
+  include ADHIE::SIMPLE_HUD
+  class << DataManager
+    alias shud_create_game_objects create_game_objects
+  end
+  def self.create_game_objects
+    shud_create_game_objects
+    $game_switches[SWITCH_SHOW_HUD] = DEFAULT_SHOW
+  end
+end
+
+class HUD < Sprite_Base
+  include ADHIE::SIMPLE_HUD
+  
+  def initialize
+    super
+    @last_hp = 0
+    @last_mp = 0
+    @last_re = 0
+    @last_fn = ""
+    @last_fi = -1
+    self.bitmap = Bitmap.new(240, 72)
+    bitmap.font.size = line_height
+    bitmap.font.color = Color.new(255,255,255,255)
+    refresh
+    update
+  end
+  def line_height
+    16
+  end
+  
+  def text_color(n)
+    windowskin = Cache.system("Window")
+    windowskin.get_pixel(64 + (n % 8) * 8, 96 + (n / 8) * 8)
+  end
+  def gauge_back_color;  text_color(19);  end;
+  def gauge_color(index);   text_color(20+index);  end;
+  
+  def actor
+    $game_player ? $game_player.actor : nil
+  end
+  def refresh
+    return bitmap.clear if actor == nil
+    for i in 0..4
+      draw_item(i)
+    end
+  end
+  def item_name(index)
+    case index
+    when 0; return Vocab::hp
+    when 1; return Vocab::mp
+    when 2; return ADHIE::HORROR_TOOLS::RESOURCE_VOCAB
+    end
+  end
+  def item_rate(index)
+    case index
+    when 0; return actor.hp_rate
+    when 1; return actor.mp_rate
+    when 2; return $game_player.res_rate
+    end
+  end
+  def draw_item(index)
+    case index
+    when 0,1,2
+      return if index == 0 and !SHOW_HP
+      return if index == 1 and !SHOW_MP
+      return if index == 2 and !SHOW_RES
+      rect = Rect.new(0, line_height * index, 72, line_height)
+      draw_text(rect, item_name(index),  2)
+      rect.x += 90; rect.width += 18
+      if index != 2
+        draw_gauge(rect.x, rect.y, rect.width, item_rate(index),
+                   gauge_color(index*2), gauge_color(index*2+1))
+      else
+        draw_grid_gauge(rect.x, rect.y, rect.width, item_rate(index),
+                   gauge_color(index*2), gauge_color(index*2+1))
+      end
+    when 3
+      return if !SHOW_FACE
+      face = Cache.face(actor.face_name)
+      dest_rect = Rect.new(width-48,0,48,48)
+      fx = 96 * (actor.face_index % 4)
+      fy = 96 * (actor.face_index / 4)
+      src_rect = Rect.new(fx, fy, 96, 96)
+      bitmap.stretch_blt(dest_rect, face, src_rect)
+      #last_size = bitmap.font.size
+      #bitmap.font.size = 24
+      draw_text(dest_rect.x,dest_rect.y,dest_rect.width, 24,actor.name,  2)
+      #bitmap.font.size = last_size
+    when 4
+      return if !SHOW_ICONS
+      draw_actor_icons(actor, 96, 48, width - 96)
+    end
+    update_last_value(index)
+  end
+  def redraw_item(index)
+    case index
+    when 0,1,2
+      rect = Rect.new(0, line_height * index, 180, line_height)
+    when 3
+      rect = Rect.new(216,0,48,48)
+    when 4
+      rect = Rect.new(96,48,width-96,24)
+    end
+    bitmap.clear_rect(rect)
+    draw_item(index)
+  end
+  def draw_text(*args)
+    bitmap.draw_text(*args)
+  end
+  def draw_icon(icon_index, x, y, enable = true)
+    icon_bitmap = Cache.system("Iconset")
+    rect = Rect.new(icon_index % 16 * 24, icon_index / 16 * 24, 24, 24)
+    bitmap.blt(x, y, icon_bitmap, rect, enable ? 255 : 128)
+  end
+  def draw_gauge(x, y, width, rate, color1, color2)
+    fill_w = ((width-4) * rate).to_i
+    gauge_y = y + 4
+    bitmap.fill_rect(x, gauge_y, width, 10, gauge_back_color)
+    bitmap.gradient_fill_rect(x+2, gauge_y+2, fill_w, 6, color1, color2)
+  end
+  def draw_grid_gauge(x, y, width, rate, color1, color2)
+    total_grid = 20
+    zero = (rate == 0)
+    rate = ((rate * total_grid).ceil / total_grid.to_f)
+    fill_w = zero ? 0 : ((width-4) * rate).to_i
+    gauge_y = y + 4
+    bitmap.fill_rect(x, gauge_y, width, 10, gauge_back_color)
+    bitmap.gradient_fill_rect(x+2, gauge_y+2, fill_w, 6, color1, color2)
+  end
+  def draw_actor_icons(actor, x, y, width = 96)
+    icons = (actor.state_icons + actor.buff_icons)[0, width / 24]
+    icons.each_with_index {|n, i|
+      draw_icon(n, x + 24 * (width/24 - icons.size + i), y)
+    }
+  end
+  def update_last_value(index)
+    case index
+    when 0; @last_hp = actor.hp
+    when 1; @last_mp = actor.mp
+    when 2; @last_re = $game_player.resource
+    when 3; @last_fi = actor.face_index; @last_fn != actor.face_name
+    when 4; @last_st = actor.states
+    end
+  end
+  def update
+    super
+    return bitmap.clear if actor == nil
+    if $game_message.busy?
+      self.visible = false
+    else
+      self.visible = $game_switches[SWITCH_SHOW_HUD]
+    end
+    redraw_item(0) if @last_hp != actor.hp
+    redraw_item(1) if @last_mp != actor.mp
+    if defined?($game_player.resource)
+      redraw_item(2) if @last_re != $game_player.resource
+    end
+    redraw_item(3) if @last_fn != actor.face_name or @last_fi != actor.face_index
+    redraw_item(4) if @last_st != actor.states
+  end
+end
+
+class Scene_Map < Scene_Base
+  alias shud_start start
+  def start
+    shud_start
+    @maphud = HUD.new
+    hudx = ADHIE::SIMPLE_HUD::FIX_POSITIONS[:base][0]
+    hudy = ADHIE::SIMPLE_HUD::FIX_POSITIONS[:base][1]
+    @maphud.x = hudx == nil ? (Graphics.width - @maphud.width - 12) : hudx
+    @maphud.y = hudy == nil ? 12 : hudy
+    @maphud.z = 199
+  end
+  alias shud_terminate terminate
+  def terminate
+    shud_terminate
+    @maphud.dispose
+  end
+  alias shud_update update
+  def update
+    shud_update
+    update_maphud
+  end
+  def update_maphud
+    unless ADHIE::SIMPLE_HUD::FIX_POSITIONS.values.any? {|pos| pos != nil}
+      if ($game_player.x - $game_map.display_x) > 8 and
+      ($game_player.y - $game_map.display_y) < 5
+        @maphud.x = 12
+      else
+        @maphud.x = Graphics.width - @maphud.width - 12
+      end
+    end
+    if ADHIE::SIMPLE_HUD::HIDE_WHEN_FULL
+      if $game_player.actor.hp == $game_player.actor.mhp and
+      $game_player.actor.mp == $game_player.actor.mmp and
+      $game_player.actor.states.empty?
+        @maphud.opacity -= 12 if @maphud.opacity > 0
+      else
+        @maphud.opacity += 12 if @maphud.opacity < 255
+      end
+    end
+    @maphud.update
+  end
+  
+end
+
+#==============================================================================
+# ** Scene_Map
+#==============================================================================
+
+class Scene_Map < Scene_Base
+
+  #--------------------------------------------------------------------------
+  # * Create Map Name Window
+  #--------------------------------------------------------------------------
+  alias shud_create_location_window create_location_window
+  def create_location_window
+    shud_create_location_window
+    @map_name_window.y += 96
+  end
+  
+end

@@ -1,0 +1,9 @@
+# http://forum.chaos-project.com/index.php?topic=13031.0
+module ZOMD5
+  @createMD5string = Win32API.new('zomd5.dll', 'GetChecksumFromString', 'pp', 'I')
+  def self.calc_md5(string)
+    md5 = " "*128
+    @createMD5string.call(string,md5)
+    md5.unpack("A*")
+  end
+end

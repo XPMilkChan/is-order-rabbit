@@ -1,0 +1,245 @@
+#GameJolt API for RPG Maker VX Ace
+
+module GameJolt
+  # Change these for your game
+  GameId = "137489"
+  PrivateKey = "c6d29d484b12930bad6d75f7365a1fd3"
+  
+  # Functions
+  def self.login()
+    enter_text("What's your username?", -1, 30)
+    user_name = $inputText
+    user_name.gsub!("&", "_")
+    enter_text("What's your user token?", -1, 30)
+    user_token = $inputText
+    user_token.gsub!("&", "_")
+    
+    isCorrect = authenticate(user_name, user_token)
+    
+    if isCorrect
+      CustomData.set("gj_username", user_name)
+      CustomData.set("gj_usertoken", user_token)
+      sync_trophies()
+    end
+    
+    return isCorrect
+  end
+
+  def self.is_logged_in()
+    # This will re-authenticate if logged in, so don't call it all the time.
+    user_name = CustomData.get("gj_username")
+    user_token = CustomData.get("gj_usertoken")
+    if user_name != nil and user_token != nil
+      return authenticate(user_name, user_token)
+    else
+      return false
+    end
+  end
+  
+  def self.award_trophy(trophy_id)
+    local_trophies = CustomData.get("trophies")
+    if local_trophies == nil
+      trophy_has_local = false
+    else
+      trophy_has_local = local_trophies.include?(trophy_id)
+    end
+    unless trophy_has_local
+      CustomData.push("trophies", trophy_id)
+    end
+    if has_login_data and ((not trophy_has_local) or (not CustomData.get("isTrophySynced")))
+      sync_trophies()
+    end
+  end
+  
+  def self.submit_score(score, score_description = "(SCORE) point(SCOREPLURAL)", scoreboard_id = "main", extra_data = "", allow_guests = false, guest_name = "")
+    isloggedin = is_logged_in()
+    parameterstring = "?score=" + score_description.gsub("(SCORE)", score.to_s)
+    if score != 1
+      parameterstring.gsub!("(SCOREPLURAL)", "s")
+    else
+      parameterstring.gsub!("(SCOREPLURAL)", "")
+    end
+    parameterstring += "&sort=" + score.to_s
+    if scoreboard_id != "main"
+      parameterstring += "&table_id=" + scoreboard_id
+    end
+    if extra_data != ""
+      parameterstring += "&extra_data=" + extra_data
+    end
+    if isloggedin
+      request = do_request("scores/add/" + parameterstring + "&" + get_userdata_string())
+      return is_successful(request)
+    else
+      if allow_guests
+        if guest_name == ""
+          enter_text("Please enter your name to submit your score:", -1, 15)
+          guest_name = $inputText
+          guest_name.gsub!("&", "_")
+        end
+        if guest_name == ""
+          return false
+        else
+          request = do_request("scores/add/" + parameterstring + "&guest=" + guest_name)
+          return is_successful(request)
+        end
+      end
+      return false
+    end
+  end
+  
+  def self.show_highscores(numberofscores = 4, scoreboard_id = "main")
+    $game_message.add(get_highscores_formatted(numberofscores, scoreboard_id))
+  end
+  
+  def self.logoff()
+    CustomData.set("gj_username", "")
+    CustomData.set("gj_usertoken", "")
+  end
+  
+  def self.set_data_store(key, data, user = false)
+    request = do_request("users/auth/?username=" + username + "&user_token=" + token)
+    return is_successful(request)
+  end
+  
+  # Internal vars
+  @error = ""
+  
+  # Internal functions (you can use these if you need, but you'll want to use
+  # the functions above most of the time)
+  def self.do_request(baseUrl)
+    urlHash = ZOMD5.calc_md5("http://gamejolt.com/api/game/v1/" + baseUrl + "&game_id=" + GameId + "&format=json" + PrivateKey)
+    urlHash = urlHash[0]
+    result = EFE.request("gamejolt.com", "api/game/v1/" + baseUrl + "&game_id=" + GameId + "&format=json&signature=" + urlHash)
+    result = JSON.decode(result)
+    if result != nil
+      return result["response"]
+    else
+      return {"success" => "false"}
+    end
+  end
+  
+  def self.is_successful(request)
+    success = make_bool(request["success"])
+    unless success
+      @error = request["message"]
+    end
+    return success
+  end
+  
+  def self.make_bool(string)
+    return string == "true"
+  end
+  
+  def self.authenticate(username, token)
+    return is_successful(do_request("users/auth/?username=" + username + "&user_token=" + token))
+  end
+  
+  def self.get_userdata_string()
+    user_name = CustomData.get("gj_username")
+    user_token = CustomData.get("gj_usertoken")
+    return "username=" + user_name + "&user_token=" + user_token
+  end
+  
+  def self.get_error()
+    return @error
+  end
+  
+  def self.sync_trophies()
+    local_trophies = CustomData.get("trophies")
+    if local_trophies != nil
+      request = do_request("trophies/?" + get_userdata_string())
+      success = is_successful(request)
+      if success
+        CustomData.set("isTrophySynced", true)
+        online_trophies = request["trophies"]
+        if online_trophies != ""
+          online_trophies.each do |online_trophy|
+            trophy_id = online_trophy["id"]
+            trophy_has_local = local_trophies.include?(trophy_id)
+            trophy_has_online = make_bool(online_trophy["achieved"])
+            if trophy_has_local and not trophy_has_online
+              do_request("trophies/add-achieved/?" + get_userdata_string() + "&trophy_id=" + trophy_id)
+            end
+          end
+        end
+      else
+        CustomData.set("isTrophySynced", false)
+      end
+    end
+  end
+  
+  def self.get_highscores_formatted(numberofscores = 10, scoreboard_id = "main")
+    all_highscores = get_highscores(numberofscores, scoreboard_id)
+    if all_highscores != nil and all_highscores != ""
+      result = ""
+      number = 1
+      all_highscores.each do |one_highscore|
+        if number != 1
+          result += "\n"
+        end
+        resultpart = (number >= 10 ? "" : " ") + (number >= 100 or numberofscores < 100 ? "" : " ") + number.to_s + ": "
+        resultpart += one_highscore["name"]
+        scorestring = one_highscore["score"]
+        numberofspaces = (52 - scorestring.length - resultpart.length)
+        if numberofspaces > 0
+          resultpart += ' ' * numberofspaces
+        else
+          if scorestring.length < 40
+            resultpart = resultpart[0...(48 - scorestring.length)] + "... "
+          end
+        end
+        resultpart += scorestring
+        result += resultpart
+        number += 1
+      end
+      if result.include?("\\")
+        result.gsub!("\\", " ")
+      end
+      return result
+    else
+      return ""
+    end
+  end
+  
+  def self.get_highscores(numberofscores = 10, scoreboard_id = "main", user_only = false)
+    parameterstring = "?limit=" + numberofscores.to_s
+    if user_only
+      if has_login_data()
+        parameterstring += "&" + get_userdata_string()
+      end
+    end
+    if scoreboard_id != "main"
+      parameterstring += "&table_id=" + scoreboard_id
+    end
+    request = do_request("scores/" + parameterstring)
+    success = is_successful(request)
+    if success
+      all_highscores = request["scores"]
+      if all_highscores != ""
+        all_highscores.each do |one_highscore|
+          one_highscore["name"] = (one_highscore["guest"] == "") ? one_highscore["user"] : one_highscore["guest"]
+        end
+      end
+      return all_highscores
+    else
+      return nil
+    end
+  end
+  
+  def self.has_login_data()
+    # A quick way to see if there is any chance that the player has logged in.
+    # This does not guarantee that the login data is correct (use is_logged_in()
+    # for that), but it does guarantee that an username and password have been
+    # supplied.
+    user_name = CustomData.get("gj_username")
+    user_token = CustomData.get("gj_usertoken")
+    return (user_name != nil and user_token != nil)
+  end
+  
+  # Copied this to here.
+  def self.enter_text(text="", var=Tsuki::Text_Input::Text_Variable, max_char=Tsuki::Text_Input::Max_Chars)
+    SceneManager.call(Scene_Text)
+    SceneManager.scene.prepare(text, var, max_char)
+    Fiber.yield while SceneManager.scene_is?(Scene_Text)
+  end
+end

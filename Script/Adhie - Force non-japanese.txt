@@ -1,0 +1,5 @@
+class RPG::System
+  def japanese
+    false
+  end
+end

@@ -1,0 +1,62 @@
+#==============================================================================
+# ■ Window_User
+#==============================================================================
+
+class Window_User < Window_Base
+  #--------------------------------------------------------------------------
+  # ● オブジェクト初期化
+  #--------------------------------------------------------------------------
+  def initialize
+    super(0, 0, window_width, fitting_height(3))
+    refresh
+  end
+  #--------------------------------------------------------------------------
+  # ● ウィンドウ幅の取得
+  #--------------------------------------------------------------------------
+  def window_width
+    return 160
+  end
+  #--------------------------------------------------------------------------
+  # ● リフレッシュ
+  #--------------------------------------------------------------------------
+  def refresh
+    contents.clear
+    rect = Rect.new(0, 0, self.width - 32, line_height)
+    change_color(system_color)
+    draw_text(rect, "GameJolt ID", 2)
+    change_color(normal_color)
+    rect.y += line_height
+    draw_text(rect, user_name)
+    rect.y += line_height
+    draw_text(rect, user_token)
+  end
+  #--------------------------------------------------------------------------
+  # ● Username/token
+  #--------------------------------------------------------------------------
+  def user_name
+    text = CustomData.get("gj_username")
+    text = "" if text == nil
+    sprintf("Ｎ : %s", text)
+  end
+  def user_token
+    text = CustomData.get("gj_usertoken")
+    text = "" if text == nil
+    sprintf("Ｔ : %s", text)
+  end
+  #--------------------------------------------------------------------------
+  # ● ウィンドウを開く
+  #--------------------------------------------------------------------------
+  def open
+    refresh
+    super
+  end
+end
+
+class Scene_Menu < Scene_MenuBase
+  alias user_create_gold_window create_gold_window
+  def create_gold_window
+    user_create_gold_window
+    @user_window = Window_User.new
+    @user_window.y = @gold_window.y - @user_window.height
+  end
+end

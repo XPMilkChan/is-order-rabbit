@@ -1,0 +1,7 @@
+module Sound
+  # ブザー
+  def self.play_buzzer
+    RPG::SE.stop
+    play_system_sound(3)
+  end
+end

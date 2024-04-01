@@ -1,0 +1,195 @@
+module ADHIE
+  module EVENT_SENSOR
+    SENSOR_SELF_SWITCH = "D"
+    RANGE_COMMENT_TAG = /<sensor: (\d+)>/
+    MOVING_RANGE_COMMENT_TAG = /<moving sensor: (\d+)>/
+    DASHING_RANGE_COMMENT_TAG = /<dashing sensor: (\d+)>/
+    LIGHTEN_RANGE_COMMENT_TAG = /<lighten sensor: (\d+)>/
+    SIGHTLINE_RANGE_COMMENT_TAG = /<sightline sensor: (\d+)>/
+    SIGHTLINE_WIDTH_COMMENT_TAG = /<sightline width: (\d+)>/
+    SIGHTLINE_LIGHTWIDE_COMMENT_TAG = /<sight light wide>/
+  end
+end
+
+#==============================================================================
+# ■ Game Character
+#==============================================================================
+class Game_Character < Game_CharacterBase
+
+  #--------------------------------------------------------------------------
+  # ● Distance To
+  #--------------------------------------------------------------------------
+  def distance_to(char)
+    distance_x_from(char.x).abs + distance_y_from(char.y).abs
+  end
+  
+  #--------------------------------------------------------------------------
+  # ● In Sightline
+  #--------------------------------------------------------------------------
+  def in_sightline?(char)
+    dist_x = distance_x_from(char.x).abs
+    dist_y = distance_y_from(char.y).abs
+    case @direction
+    when 2
+      return false if char.y <= self.y
+      return false if dist_x > 1
+    when 4
+      return false if char.x >= self.x
+      return false if dist_y > 1
+    when 6
+      return false if char.x <= self.x
+      return false if dist_y > 1
+    when 8
+      return false if char.y >= self.y
+      return false if dist_x > 1
+    end
+    return true
+  end
+  
+  def front_light?
+    false
+  end
+end
+
+#==============================================================================
+# ■ Game Event
+#==============================================================================
+class Game_Event < Game_Character
+  attr_reader   :sensor_range
+  
+  #--------------------------------------------------------------------------
+  # ● Setup Page Setting
+  #--------------------------------------------------------------------------                     
+  alias esr_setup_page_settings setup_page_settings
+  def setup_page_settings
+    esr_setup_page_settings
+    setup_event_sensor
+  end
+  
+  #--------------------------------------------------------------------------
+  # ● Setup Event Sensor
+  #--------------------------------------------------------------------------                       
+  def setup_event_sensor
+    @sensor_range = {
+      :base => 0, :moving => 0, :dashing => 0, :lighten => 0,
+      :sightline => 0, :sightextra => 1,
+      :sightlightwide => false
+    }
+    return if @list == nil
+    for command in @list
+      if command.code == 108
+        case command.parameters[0]
+        when ADHIE::EVENT_SENSOR::RANGE_COMMENT_TAG
+          @sensor_range[:base] = $1.to_i
+        when ADHIE::EVENT_SENSOR::MOVING_RANGE_COMMENT_TAG
+          @sensor_range[:moving] = $1.to_i
+        when ADHIE::EVENT_SENSOR::DASHING_RANGE_COMMENT_TAG
+          @sensor_range[:dashing] = $1.to_i
+        when ADHIE::EVENT_SENSOR::LIGHTEN_RANGE_COMMENT_TAG
+          @sensor_range[:lighten] = $1.to_i
+        when ADHIE::EVENT_SENSOR::SIGHTLINE_RANGE_COMMENT_TAG
+          @sensor_range[:sightline] = $1.to_i
+        when ADHIE::EVENT_SENSOR::SIGHTLINE_WIDTH_COMMENT_TAG
+          @sensor_range[:sightextra] = $1.to_i
+        when ADHIE::EVENT_SENSOR::SIGHTLINE_LIGHTWIDE_COMMENT_TAG
+          @sensor_range[:sightlightwide] = true
+        end
+      end
+    end
+  end
+  
+  #--------------------------------------------------------------------------
+  # ● Update
+  #--------------------------------------------------------------------------            
+  alias esr_update update 
+  def update
+    esr_update
+    update_event_sensor(update_sensor_range)
+  end
+  
+  #--------------------------------------------------------------------------
+  # ● Lighten?
+  #--------------------------------------------------------------------------
+  def lighten?
+    return false unless $game_player.light_on?
+    return false if $game_player.front_light? and !$game_player.in_sightline?(self)
+    return true
+  end
+  
+  #--------------------------------------------------------------------------
+  # ● Lighten?
+  #--------------------------------------------------------------------------
+  def stared?
+    $game_player.in_sightline?(self)
+  end
+  
+  #--------------------------------------------------------------------------
+  # ● Update Sensor Range
+  #--------------------------------------------------------------------------
+  def update_sensor_range
+    return 0 if @sensor_range == nil
+    ranges = []
+    move = $game_player.moving?
+    dash = move and $game_player.dash?
+    ranges.push(@sensor_range[:base])
+    ranges.push(@sensor_range[:moving]) if move
+    ranges.push(@sensor_range[:dashing]) if dash
+    ranges.push(@sensor_range[:sightline]) if in_sightline_range?($game_player)
+    if defined?(Light_Core) and defined?($game_player.light_on?)
+      ranges.push(@sensor_range[:lighten]) if lighten?
+    end
+    return (ranges + [0]).max
+  end
+  #--------------------------------------------------------------------------
+  # ● Update Event Sensor
+  #--------------------------------------------------------------------------
+  def update_event_sensor(range)
+    distance = distance_to($game_player)
+    return if (distance + range) == 0
+    enable   = (distance <= range)
+    key = [$game_map.map_id, self.id, ADHIE::EVENT_SENSOR::SENSOR_SELF_SWITCH]
+    last_enable = $game_self_switches[key]
+    execute_sensor_effect(enable,key) if enable != last_enable
+  end
+
+  #--------------------------------------------------------------------------
+  # ● In Sightline
+  #--------------------------------------------------------------------------
+  def in_sightline_range?(char)
+    distance = distance_to(char)
+    dist_x = distance_x_from(char.x).abs
+    dist_y = distance_y_from(char.y).abs
+    range = @sensor_range[:sightline]
+    width = @sensor_range[:sightextra]
+    if defined?(Light_Core) and defined?($game_player.light_on?)
+      width += 1 if $game_player.light_on? and @sensor_range[:sightlightwide]
+    end
+    return false if range < distance
+    case @direction
+    when 2
+      return false if char.y <= self.y
+      return false if dist_x > width - 1
+    when 4
+      return false if char.x >= self.x
+      return false if dist_y > width - 1
+    when 6
+      return false if char.x <= self.x
+      return false if dist_y > width - 1
+    when 8
+      return false if char.y >= self.y
+      return false if dist_x > width - 1
+    end
+    return true
+  end
+  
+  #--------------------------------------------------------------------------
+  # ● Execute Sensor Effect
+  #--------------------------------------------------------------------------
+  def execute_sensor_effect(enable, key)      
+    @pattern = 0
+    @pattern_count = 0               
+    $game_self_switches[key] = enable
+    self.refresh
+  end
+    
+end

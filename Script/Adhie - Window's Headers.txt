@@ -1,0 +1,41 @@
+module ADHIE
+  module HEADERS
+    LIST = {
+    # window_class => [need_eval?, text],
+    "Window_ItemDetail" => [true, 
+                          "\"View Detail: \" + ADHIE::ObjItem::VIEW_INPUT.to_s"],
+    #"Window_ItemList"   => [false, "Possession"],
+    #"Window_ItemQueue"  => [false, "Items to Trash"],
+    
+    "Window_EquipStatus" => [false, "Info"],
+    "Window_EquipSlot"   => [false, "Equipments"],
+    #"Window_EquipItem"   => [false, "Possession"],
+    
+    "Window_ClassStatus" => [false, "Info"],
+    "Window_AlchemyOutput" => [false, "Ingredients"]
+    }
+  end
+end
+
+class Window_Base < Window
+  def draw_header(text, align = 2)
+    make_font_smaller
+    change_color(system_color, false)
+    contents.draw_text(0, 0, self.width - 32, line_height, text, align)
+    reset_font_settings
+  end
+  alias wdh_create_contents create_contents
+  def create_contents
+    wdh_create_contents
+    if ADHIE::HEADERS::LIST.keys.include?(self.class.to_s)
+      return if not self.instance_of?(self.class)
+      arr = ADHIE::HEADERS::LIST[self.class.to_s]
+      text = arr[1]
+      if arr[0]
+        draw_header(eval(text))
+      else
+        draw_header(text)
+      end
+    end
+  end
+end

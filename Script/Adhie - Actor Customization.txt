@@ -1,0 +1,153 @@
+#==============================================================================
+
+class Game_Player < Game_Character
+  #--------------------------------------------------------------------------
+  # ● リフレッシュ
+  #--------------------------------------------------------------------------
+  alias actorcustom_refresh refresh
+  def refresh
+    actorcustom_refresh
+    @character_hue = actor ? actor.character_hue : 0
+  end
+  
+end
+
+#==============================================================================
+# ■ Sprite_Character
+#==============================================================================
+
+class Sprite_Character < Sprite_Base
+  #--------------------------------------------------------------------------
+  # ● 転送元ビットマップの更新
+  #--------------------------------------------------------------------------
+  def update_bitmap
+    if graphic_changed?
+      @tile_id = @character.tile_id
+      @character_name = @character.character_name
+      @character_index = @character.character_index
+      @character_hue = @character.character_hue
+      if @tile_id > 0
+        set_tile_bitmap
+      else
+        set_character_bitmap
+      end
+    end
+  end
+  #--------------------------------------------------------------------------
+  # ● グラフィックの変更判定
+  #--------------------------------------------------------------------------
+  def graphic_changed?
+    @tile_id != @character.tile_id ||
+    @character_name != @character.character_name ||
+    @character_index != @character.character_index ||
+    @character_hue != @character.character_hue
+  end
+  
+end
+
+#==============================================================================
+# ■ Window_ActorCustomResult
+#==============================================================================
+
+class Window_ActorCustomResult < Window_Base
+  
+  #--------------------------------------------------------------------------
+  # ● Initialize
+  #--------------------------------------------------------------------------
+  def initialize
+    super(0, 0, Graphics.width, 56)
+    refresh
+  end
+  
+  def refresh
+    contents.clear
+    draw_text(0, 0, 96, line_height, "Result :", 2)
+    $game_party.members.each_with_index { |actor, i|
+      draw_actor_graphic(actor, 96 + 16 + 32 * i, 32)
+    }
+  end
+  
+end
+
+#==============================================================================
+# ■ Window_ActorCustomize
+#==============================================================================
+
+class Window_ActorCustomize < Window_Base
+  
+  #--------------------------------------------------------------------------
+  # ● Initialize
+  #--------------------------------------------------------------------------
+  def initialize
+    super(0, 0, Graphics.width, 288)
+    refresh
+  end
+  
+  def refresh
+    contents.clear
+  end
+  
+end
+
+#==============================================================================
+# ■ Window_MenuCommand
+#==============================================================================
+
+class Window_MenuCommand < Window_Command
+  #--------------------------------------------------------------------------
+  # ● コマンドリストの作成
+  #--------------------------------------------------------------------------
+  alias actorcustom_make_command_list make_command_list
+  def make_command_list
+    actorcustom_make_command_list
+    add_options_command
+  end
+  #--------------------------------------------------------------------------
+  # ● Add Options Command
+  #--------------------------------------------------------------------------
+  def add_actorcustom_command
+    add_command(Vocab::actorcustom, :actorcustom)
+  end
+  
+end
+
+#==============================================================================
+# ■ Scene_Menu
+#==============================================================================
+class Scene_Menu < Scene_MenuBase
+  #--------------------------------------------------------------------------
+  # ● コマンドウィンドウの作成
+  #--------------------------------------------------------------------------
+  alias actorcustom_create_command_window create_command_window
+  def create_command_window
+    actorcustom_create_command_window
+    @command_window.set_handler(:actorcustom,    method(:call_actorcustom))
+    @command_window.set_handler(:cancel, method(:return_scene))
+  end
+  def call_actorcustom
+    SceneManager.call(Scene_ActorCustomize)
+  end
+end
+
+#==============================================================================
+# ■ Scene_ActorCustomize
+#==============================================================================
+
+class Scene_ActorCustomize < Scene_MenuBase
+  include WALLPAPER_EX
+  def start
+    super
+    create_help_window
+    create_customresult_window
+    create_customize_window
+    set_window_opacity
+  end
+  def create_customresult_window
+    @customresult_window = Window_ActorCustomResult.new
+    @customresult_window.y = @help_window.y + @help_window.height
+  end
+  def create_customize_window
+    @customize_window = Window_ActorCustomize.new
+    @customize_window.y = @customresult_window.y + @customresult_window.height
+  end
+end

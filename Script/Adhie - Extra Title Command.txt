@@ -1,0 +1,42 @@
+module ADHIE
+  module EXTTCOMM
+    EXTRAS       = [
+    ["Options", :options, :command_options]
+    ]
+  end
+end
+class Scene_Title
+  def command_options
+    SceneManager.call(Scene_Options)
+  end
+end
+
+
+class Window_TitleCommand < Window_Command
+  #--------------------------------------------------------------------------
+  # ● コマンドリストの作成
+  #--------------------------------------------------------------------------
+  alias make_command_list_etc make_command_list
+  def make_command_list
+    make_command_list_etc
+    make_extra_commands
+  end
+  def make_extra_commands
+    for i in 0..ADHIE::EXTTCOMM::EXTRAS.size-1
+      add_command(ADHIE::EXTTCOMM::EXTRAS[i][0], ADHIE::EXTTCOMM::EXTRAS[i][1])
+    end
+  end
+end
+class Scene_Title < Scene_Base
+  alias create_command_windows_etc create_command_window
+  def create_command_window
+    create_command_windows_etc
+    add_extra_handlers
+  end
+  def add_extra_handlers
+    for i in 0..ADHIE::EXTTCOMM::EXTRAS.size-1
+      @command_window.set_handler(ADHIE::EXTTCOMM::EXTRAS[i][1],
+                           method(ADHIE::EXTTCOMM::EXTRAS[i][2]))
+    end
+  end
+end

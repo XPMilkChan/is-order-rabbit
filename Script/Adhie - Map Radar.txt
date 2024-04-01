@@ -1,0 +1,310 @@
+module ADHIE
+  module MAP_RADAR
+    COMMENT_TAG = /<([^>]*)>/
+    TAG_COLOR = {
+      :default => Color.new(0, 0, 0, 0),
+      :player  => Color.new(0,255,0,255),
+      :npc     => Color.new(32,64,224,255),
+      :monster => Color.new(255,32,32,255),
+      :treasure=> Color.new(216,216,32,255),
+      :item    => Color.new(216,32,216,255),
+      :document=> Color.new(128,144,64,255),
+      :hidden  => Color.new(12, 32, 12, 32),
+    }
+    
+    MAX_RADAR_RANGE = 6
+    SENSOR_TAGS = [:hidden, :item, :treasure]
+    SENSOR_ANIMATION = 112
+    SENSOR_DISTANCE = 4
+    
+    TILE_SIZE = 7
+    GRID_SIZE = 2
+    GRID_COLOR = Color.new(32,96,192,192)
+    BACK_COLOR = Color.new(128,128,128,192)
+    OUTLINE_COLOR = Color.new(64,64,64,255)
+    POSITIONS = {
+      :x_left  => 8,
+      :x_right => Graphics.width - 8,
+      :y_up    => 8,
+      :y_down  => Graphics.height - 8,
+      :z       => 200,
+      :blend_type => 0,
+    }
+  end
+end
+#==============================================================================
+# ■ Game CharacterBase
+#==============================================================================
+class Game_CharacterBase
+  attr_accessor :radar_tag
+end
+#==============================================================================
+# ■ Game Player
+#==============================================================================
+class Game_Player < Game_Character
+  alias mapradar_initialize initialize
+  def initialize
+    mapradar_initialize
+    @radar_tag = :player
+    @radar = false
+  end
+  def radar_on?
+    @radar
+  end
+  def sense?
+    true
+  end
+end
+#==============================================================================
+# ■ Game Follower
+#==============================================================================
+class Game_Follower < Game_Character
+  alias mapradar_initialize initialize
+  def initialize(*args)
+    mapradar_initialize(*args)
+    @radar_tag = :player
+  end
+end
+#==============================================================================
+# ■ Game Event
+#==============================================================================
+class Game_Event < Game_Character
+  
+  #--------------------------------------------------------------------------
+  # ● Setup Page Setting
+  #--------------------------------------------------------------------------                     
+  alias mapradar_setup_page_settings setup_page_settings
+  def setup_page_settings
+    mapradar_setup_page_settings
+    setup_radar_tag
+  end
+  
+  #--------------------------------------------------------------------------
+  # ● Setup Radar Tag
+  #--------------------------------------------------------------------------                       
+  def setup_radar_tag
+    return if @list == nil
+    @radar_tag = :default
+    for command in @list
+      if command.code == 108
+        if command.parameters[0] =~ ADHIE::MAP_RADAR::COMMENT_TAG
+          @radar_tag = $1.downcase.to_sym
+        end
+      end
+    end
+  end
+end
+
+class Radar_Point < Sprite_Base
+  include ADHIE::MAP_RADAR
+  attr_reader :char
+  def initialize(char)
+    @char = char
+    @viewrect = Rect.new
+    super(nil)
+    self.bitmap = Bitmap.new(TILE_SIZE, TILE_SIZE)
+    refresh
+  end
+  def sensable?
+    SENSOR_TAGS.include?(@char.radar_tag)
+  end
+  def refresh
+    if TAG_COLOR[@char.radar_tag].nil?
+      bitmap.fill_rect(bitmap.rect, TAG_COLOR[:default])
+    else
+      bitmap.fill_rect(bitmap.rect, TAG_COLOR[@char.radar_tag])
+    end
+    @tag = @char.radar_tag
+  end
+  def update
+    super
+    self.x = (@char.x - $game_map.display_x) * (GRID_SIZE + TILE_SIZE) + GRID_SIZE + 1
+    self.y = (@char.y - $game_map.display_y) * (GRID_SIZE + TILE_SIZE) + GRID_SIZE + 1
+    self.x += @viewrect.x
+    self.y += @viewrect.y
+    refresh if @tag != @char.radar_tag
+  end
+  def viewrect=(rect)
+    @viewrect = rect
+  end
+end
+
+class Game_Radar
+  include ADHIE::MAP_RADAR
+  def initialize
+    @sprites_visible = false
+    @sense_delay = 0
+    create_viewrect
+    create_grid
+    create_event_tiles
+    create_actor_tiles
+  end
+  def x_count; Graphics.width / 32; end
+  def y_count; Graphics.height / 32; end
+  def create_viewrect
+    @viewrect = Rect.new(POSITIONS[:x_left], POSITIONS[:y_up],
+                x_count*TILE_SIZE+(x_count+1)*GRID_SIZE+2,
+                y_count*TILE_SIZE+(y_count+1)*GRID_SIZE+2)
+  end
+  def create_grid
+    @grid = Sprite.new
+    @grid.visible = @sprites_visible
+    @grid.z = POSITIONS[:z]
+    @grid.blend_type = POSITIONS[:blend_type]
+    w = @viewrect.width; h = @viewrect.height
+    @grid.bitmap = Bitmap.new(w, h)
+    @grid.bitmap.fill_rect(1, 0, w-2, 1, OUTLINE_COLOR)
+    @grid.bitmap.fill_rect(1, h-1, w-2, 1, OUTLINE_COLOR)
+    @grid.bitmap.fill_rect(0, 1, 1, h-2, OUTLINE_COLOR)
+    @grid.bitmap.fill_rect(w-1, 1, 1, h-2, OUTLINE_COLOR)
+    rect = Rect.new(2, 2, w-4, h-4)
+    @grid.bitmap.fill_rect(rect, BACK_COLOR)
+    rect = Rect.new(1, 1, GRID_SIZE, h-2)
+    (x_count+1).times { |i|
+      @grid.bitmap.fill_rect(rect, GRID_COLOR)
+      rect.x += (TILE_SIZE+GRID_SIZE)
+    }
+    rect = Rect.new(1, 1, w-2, GRID_SIZE)
+    (y_count+1).times { |i|
+      @grid.bitmap.fill_rect(rect, GRID_COLOR)
+      rect.y += (TILE_SIZE+GRID_SIZE)
+    }
+  end
+  def create_event_tiles
+    @event_tiles = []
+    for event in $game_map.events.values
+      sprite = Radar_Point.new(event)
+      sprite.visible = @sprites_visible
+      sprite.z = POSITIONS[:z]
+      sprite.blend_type = POSITIONS[:blend_type]
+      @event_tiles.push(sprite)
+    end
+    @events = $game_map.events
+  end
+  def create_actor_tiles
+    @actor_tiles = []
+    [$game_party.battle_members.size, 4].min.times { |i|
+      char = (i == 0) ? $game_player : $game_player.followers[i-1]
+      break if i > 0 and !$game_player.followers.visible
+      @actor_tiles[i] = Radar_Point.new(char)
+      @actor_tiles[i].visible = @sprites_visible
+      @actor_tiles[i].z = POSITIONS[:z]
+      @actor_tiles[i].blend_type = POSITIONS[:blend_type]
+    }
+    @actors = $game_party.battle_members
+  end
+  
+  def update
+    update_viewrect
+    update_visibility
+    update_views
+    update_main
+  end
+  
+  def update_viewrect
+    if ($game_player.x - $game_map.display_x) < 5 and
+    ($game_player.y - $game_map.display_y) < 4
+      @viewrect.x = POSITIONS[:x_right] - @viewrect.width
+      @viewrect.y = POSITIONS[:y_down] - @viewrect.height
+    elsif ($game_player.x - $game_map.display_x) > 8 and
+    ($game_player.y - $game_map.display_y) < 5
+      @viewrect.x = POSITIONS[:x_left]
+      @viewrect.y = POSITIONS[:y_down] - @viewrect.height
+    else
+      @viewrect.x = POSITIONS[:x_left]
+      @viewrect.y = POSITIONS[:y_up]
+    end
+    for sprite in @event_tiles + @actor_tiles
+      sprite.viewrect = @viewrect
+    end
+    @grid.x, @grid.y = @viewrect.x, @viewrect.y
+  end
+  
+  def update_visibility
+    if !$game_player.radar_on? and @sprites_visible
+      for sprite in @event_tiles + @actor_tiles + [@grid]
+        sprite.visible = false
+      end
+      @sprites_visible = false
+      return
+    elsif $game_player.radar_on? and !@sprites_visible
+      for sprite in @event_tiles + @actor_tiles + [@grid]
+        sprite.visible = true
+      end
+      @sprites_visible = true
+    end
+  end
+  
+  def update_views
+    return unless @sprites_visible
+    for sprite in @event_tiles
+      sx = $game_player.distance_x_from(sprite.char.x).abs
+      sy = $game_player.distance_y_from(sprite.char.y).abs
+      sprite.visible = ((sx + sy) <= MAX_RADAR_RANGE)
+    end
+  end
+  
+  def update_main
+    @grid.update
+    create_event_tiles if @events != $game_map.events
+    create_actor_tiles if @actors != $game_party.battle_members
+    for sprite in @event_tiles
+      sprite.update if sprite.visible
+    end
+    for sprite in @actor_tiles
+      next unless sprite.visible
+      sprite.update
+      if $game_player.sense? and @actor_tiles.index(sprite) == 0
+        next unless $game_player.radar_on?
+        if !sprite.animation?
+          if @sense_delay > 0
+            @sense_delay -= 1
+          else
+            for sensed_sprite in @event_tiles.select { |sprite| sprite.sensable? }
+              sx = sensed_sprite.char.distance_x_from(sprite.char.x).abs
+              sy = sensed_sprite.char.distance_y_from(sprite.char.y).abs
+              if (sx + sy) <= SENSOR_DISTANCE
+                sprite.start_animation($data_animations[SENSOR_ANIMATION])
+                @sense_delay = 60 * (sx + sy) / SENSOR_DISTANCE
+                break
+              end
+            end
+          end
+        end
+      end
+    end
+  end
+  
+  def dispose
+    @grid.dispose
+    for sprite in @event_tiles + @actor_tiles
+      sprite.dispose
+    end
+  end
+end
+
+class Scene_Map < Scene_Base
+  alias mapradar_start start
+  def start
+    mapradar_start
+    @radar = Game_Radar.new
+  end
+  alias mapradar_update update
+  def update
+    mapradar_update
+    @radar.update
+  end
+  alias mapradar_terminate terminate
+  def terminate
+    @radar.dispose
+    mapradar_terminate
+  end
+  #--------------------------------------------------------------------------
+  # * Preprocessing for Battle Screen Transition
+  #--------------------------------------------------------------------------
+  alias mapradar_pre_battle_scene pre_battle_scene
+  def pre_battle_scene
+    @radar.dispose
+    mapradar_pre_battle_scene
+  end
+end

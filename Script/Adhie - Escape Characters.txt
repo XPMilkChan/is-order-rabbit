@@ -1,0 +1,14 @@
+class Window_Base < Window
+  alias convert_escape_characters_default convert_escape_characters
+  def convert_escape_characters(text)
+    result = convert_escape_characters_default(text)
+    result.gsub!(/\eInput\[(\w+)\]/i) { Keys.name($1.to_sym) }
+    result.gsub!(/\eParam\[(\d+)\]/i) { Vocab.param($1.to_i) }
+    result.gsub!(/\eXparam\[(\d+)\]/i) { Vocab.xparam($1.to_i) }
+    result.gsub!(/\eSparam\[(\d+)\]/i) { Vocab.sparam($1.to_i) }
+    result.gsub!(/\eItem\[(\d+)\]/i) { $data_items[$1.to_i].name }
+    result.gsub!(/\eWeapon\[(\d+)\]/i) { $data_weapons[$1.to_i].name }
+    result.gsub!(/\eArmor\[(\d+)\]/i) { $data_armors[$1.to_i].name }
+    result
+  end
+end

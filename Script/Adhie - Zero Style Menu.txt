@@ -1,0 +1,49 @@
+#==============================================================================
+# ■ Window_MenuCommand
+#==============================================================================
+
+class Window_MenuCommand < Window_Command
+
+  #--------------------------------------------------------------------------
+  # ● Make Command List
+  #--------------------------------------------------------------------------
+  def make_command_list
+    add_main_commands
+    #add_actorcustom_command
+    add_monnotes_command
+    add_save_command
+    add_options_command
+    add_game_end_command
+  end
+  #--------------------------------------------------------------------------
+  # ● Add Main Commands
+  #--------------------------------------------------------------------------
+  def add_main_commands
+    
+  end
+  
+end
+#==============================================================================
+# ■ Scene_Menu
+#==============================================================================
+
+class Scene_Menu < Scene_MenuBase
+
+  #--------------------------------------------------------------------------
+  # * Create Status Window
+  #--------------------------------------------------------------------------
+  alias zsm_create_status_window create_status_window
+  def create_status_window
+    zsm_create_status_window
+    @status_window.visible = false
+  end
+  
+  #--------------------------------------------------------------------------
+  # * Create Gold Window
+  #--------------------------------------------------------------------------
+  alias zsm_create_gold_window create_gold_window
+  def create_gold_window
+    zsm_create_gold_window
+    @gold_window.visible = false
+  end
+end

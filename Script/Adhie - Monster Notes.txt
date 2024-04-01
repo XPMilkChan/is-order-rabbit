@@ -1,0 +1,401 @@
+module ADHIE
+  module MONSTERS
+    VOCAB = "Character List"
+    UNLOCKED_NOTES_ID = [1,2,3,4,5,6,7]
+    
+    NOTES = {
+      1  => {
+        :name => "Mr. Rabbit",
+        :char => ["$Rabbit", 0],
+        :desc => [
+          "It is you.",
+          "You can sprint for faster movement.",
+          "You can sidestep or backstep to keep your",
+          "vision on someone while moving.",
+          "You can backstep to move away without",
+          "removing your glance from a thing.",
+          "You are smart, smarter than me.",
+          "You are cute, but Rabbit-Girls are even cuter.",
+        ],
+        :patt => 0,
+      },
+      2  => {
+        :name => "Cocoa",
+        :char => ["$GochiusaVX_Cocoa", 0],
+        :desc => [
+          "Fullname : Hoto Cocoa",
+          "Cocoa is a highly excitable girl with a bubbly",
+          "disposition and a sweet tooth. She is also very",
+          "clumsy and air-headed, causing many accidents.",
+          "",
+          "Movement type:",
+          "Chases straightly without hesitation.",
+          "Hit Effect: -1 Tippy Point",
+        ],
+      },
+      3  => {
+        :name => "Chino",
+        :char => ["$GochiusaVX_Chino", 0],
+        :desc => [
+          "Fullname : Kafuu Chino",
+          "The granddaughter of the Rabbit House's owner.",
+          "A soft-spoken girl who slowly warms up to Cocoa,",
+          "though is often annoyed by her insistence",
+          "on being called \"big sister.\"",
+          "",
+          "Movement type:",
+          "Chases straightly without hesitation.",
+          "Hit Effect: +1 Tippy Point",
+        ],
+      },
+      4  => {
+        :name => "Rize",
+        :char => ["$GochiusaVX_Rize", 0],
+        :desc => [
+          "Fullname : Tedeza Rize",
+          "Rize is a tough and headstrong girl.",
+          "She secretly holds an insecurity of not fitting",
+          "in and can sometimes feel lonely.",
+          "Rize can be blunt with her opinions and often",
+          "acts as the voice of common sense in the group.",
+          "",
+          "Movement type:",
+          "Chases horizontally or vertically to aim",
+          "and shoot within a direct & straight line.",
+          "Hit Effect: -1 Tippy Point",
+        ],
+      },
+      5  => {
+        :name => "Chiya",
+        :char => ["$GochiusaVX_Chiya", 0],
+        :desc => [
+          "Fullname : Ujimatsu Chiya",
+          "Cocoa's classmate at high school, whose family",
+          "runs a coffee shop of their own, Ama Usa An,",
+          "which has its own rabbit mascot named Anko.",
+          "",
+          "Movement type:",
+          "Chases straightly and fast if near.",
+          "Hit Effect: -1 Tippy Point and slows movement",
+        ],
+      },
+      6  => {
+        :name => "Sharo",
+        :char => ["$GochiusaVX_Sharo", 0],
+        :desc => [
+          "Fullname : Kirima Sharo",
+          "Chiya's childhood friend who lives next door",
+          "to the Ama Usa An and works at a herbal tea café,",
+          "Fleur de Lapin. Sharo is a sensitive and bashful",
+          "girl who has insecurities",
+          "when it comes to her image.",
+          "",
+          "Movement type:",
+          "Chases straightly, but moves away when stared.",
+          "Hit Effect: -1 Tippy Point and confuses movement",
+          "(reverses only horizontal and vertical movement)",
+        ],
+      },
+      7  => {
+        :name => "Tippy",
+        :char => ["$GochiusaVX_Tippy", 0],
+        :desc => [
+          "The café mascot for Rabbit House.",
+          "Tippy is a female angora rabbit, who likes to",
+          "rest on people's heads.",
+          "",
+          "* SAVES your progress",
+        ],
+      },
+      8  => {
+        :name => "Anko",
+        :char => ["$GochiusaVX_Anko", 0],
+        :desc => [
+          "The rabbit mascot of Ama Usa An.",
+          "Anko is a male thin black rabbit.",
+          "It seems like he has an interest to Tippy.",
+          "",
+          "Movement type:",
+          "(Undetermined)",
+          "Hit Effect: -1 Tippy Point and something",
+        ],
+        :patt => 0,
+      },
+      9  => {
+        :name => "Chino",
+        :char => ["$GochiusaVX_Chimame_Chino", 0],
+        :desc => [
+          "Fullname : Kafuu Chino",
+          "Just another version of the usual Chino.",
+          "",
+          "Movement type:",
+          "Chases straightly without hesitation.",
+          "Hit Effect: +1 Tippy Point",
+        ],
+      },
+      10  => {
+        :name => "Maya",
+        :char => ["$GochiusaVX_Chimame_Maya", 0],
+        :desc => [
+          "Fullname : Jouga Maya",
+          "One of Chino's school friends.",
+          "",
+          "Movement type:",
+          "Chases only when in vision.",
+          "Hit Effect: -1 Tippy Point and empties stamina",
+        ],
+      },
+      11  => {
+        :name => "Megu",
+        :char => ["$GochiusaVX_Chimame_Megu", 0],
+        :desc => [
+          "Fullname : Natsu Megumi",
+          "Chino's classmate in middle school,",
+          "known as Meg for short.",
+          "",
+          "Movement type:",
+          "Moves in a straight line",
+          "after turning so much",
+          "Hit Effect: -1 Tippy Point and knockbacks",
+        ],
+      },
+      12  => {
+        :name => "Aoyama",
+        :char => ["$GochiusaVX_Aoyama", 0],
+        :desc => [
+          "Fullname : Midori Aoyama",
+          "A novelist wandering around town",
+          "in search of ideas.",
+          "",
+          "Movement type:",
+          "Chases straightly, slow, but fast when near.",
+          "Hit Effect: -2 Tippy Points",
+        ],
+      },
+      13  => {
+        :name => "Mocha",
+        :char => ["$GochiusaVX_Mocha", 0],
+        :desc => [
+          "Fullname : Hoto Mocha",
+          "Cocoa's older sister.",
+          "Full of reliability of sister power.",
+          "",
+          "Movement type:",
+          "Chases straightly and respawn very slowly",
+          "Hit Effect: Replenish all Tippy Points",
+          "and gives protection temporarily.",
+        ],
+      },
+    }
+  end
+end
+
+#==============================================================================
+# ■ Vocab
+#==============================================================================
+
+module Vocab
+  
+  #--------------------------------------------------------------------------
+  # ● Monster Notes
+  #--------------------------------------------------------------------------
+  def self.monnotes; return ADHIE::MONSTERS::VOCAB; end
+    
+end
+
+class Game_System
+  include ADHIE::MONSTERS
+  alias monnotes_initialize initialize
+  def initialize
+    monnotes_initialize
+    init_monster_notes
+  end
+  def init_monster_notes
+    @monster_notes = []
+    if UNLOCKED_NOTES_ID
+      for id in UNLOCKED_NOTES_ID
+        add_monster_id(id)
+      end
+    end
+  end
+  def add_monster_id(id)
+    if id.is_a?(Integer) and !monster_valid?(id)
+      @monster_notes.push(id)
+    end
+  end
+  def total_monsters
+    NOTES.size
+  end
+  
+  def monster_valid?(id)
+    init_monster_notes if @monster_notes == nil
+    @monster_notes.include?(id)
+  end
+  def monster_name(id)
+    monster_valid?(id) ? NOTES[id][:name] : "? ? ?"
+  end
+  def monster_char_name(id)
+    NOTES[id][:char][0]
+  end
+  def monster_char_index(id)
+    NOTES[id][:char][1]
+  end
+  def monster_char_pattern(id)
+    NOTES[id][:patt] ? NOTES[id][:patt] : 1
+  end
+  def monster_description(id)
+    NOTES[id][:desc]
+  end
+end
+class Game_Interpreter
+  def add_monsternote(id)
+    $game_system.add_monster_id(id)
+  end
+  def call_monsternotes
+    SceneManager.call(Scene_MonsterNotes)
+  end
+end
+
+class Window_MonNotesName < Window_Command
+  #--------------------------------------------------------------------------
+  # ● Initialize
+  #--------------------------------------------------------------------------
+  def initialize
+    super(0, 0)
+    refresh
+  end
+  #--------------------------------------------------------------------------
+  # ● Window Width
+  #--------------------------------------------------------------------------
+  def window_width
+    return 128
+  end
+  #--------------------------------------------------------------------------
+  # ● Visible Line Number
+  #--------------------------------------------------------------------------
+  def visible_line_number
+    return 16
+  end
+  #--------------------------------------------------------------------------
+  # ● Make Command List
+  #--------------------------------------------------------------------------
+  def make_command_list
+    for id in 1..$game_system.total_monsters
+      name = $game_system.monster_name(id)
+      enable = $game_system.monster_valid?(id)
+      add_command(name, :ok, enable)
+    end
+  end
+  #--------------------------------------------------------------------------
+  # ● Update Help
+  #--------------------------------------------------------------------------
+  def update_help
+    @help_window.monster_id = @index + 1
+  end
+end
+
+class Window_MonNotesDesc < Window_Base
+  attr_reader :monster_id
+  def initialize
+    super(128,0,Graphics.width-128,Graphics.height)
+    @monster_id = 0
+    change_color(normal_color)
+    refresh
+  end
+  def monster_id=(new_id)
+    if @monster_id != new_id
+      @monster_id = new_id
+      refresh
+    end
+  end
+  def refresh
+    contents.clear
+    return if !$game_system.monster_valid?(@monster_id)
+    rect = Rect.new(0,0,self.width-32,line_height)
+    char_name  = $game_system.monster_char_name(@monster_id)
+    char_index = $game_system.monster_char_index(@monster_id)
+    char_pattern = $game_system.monster_char_pattern(@monster_id)
+    draw_character(char_name, char_index, rect.x+32, rect.y+48, char_pattern)
+    rect.y += line_height * 2
+    for text in $game_system.monster_description(@monster_id)
+      draw_text(rect, text)
+      rect.y += line_height
+    end
+  end
+  #--------------------------------------------------------------------------
+  # ● 歩行グラフィックの描画
+  #--------------------------------------------------------------------------
+  def draw_character(character_name, character_index, x, y, pattern_index = 1)
+    return unless character_name
+    bitmap = Cache.character(character_name)
+    sign = character_name[/^[\!\$]./]
+    if sign && sign.include?('$')
+      cw = bitmap.width / 3
+      ch = bitmap.height / 4
+    else
+      cw = bitmap.width / 12
+      ch = bitmap.height / 8
+    end
+    n = character_index
+    src_rect = Rect.new((n%4*3+pattern_index)*cw, (n/4*4)*ch, cw, ch)
+    contents.blt(x - cw / 2, y - ch, bitmap, src_rect)
+  end
+end
+
+class Scene_MonsterNotes < Scene_MenuBase
+  include WALLPAPER_EX
+  def start
+    super
+    create_description_window
+    create_name_window
+    set_window_opacity
+  end
+  def create_description_window
+    @description_window = Window_MonNotesDesc.new
+  end
+  def create_name_window
+    @name_window = Window_MonNotesName.new
+    @name_window.help_window = @description_window
+    @name_window.set_handler(:cancel, method(:return_scene))
+  end
+end
+
+
+#==============================================================================
+# ■ Window_MenuCommand
+#==============================================================================
+
+class Window_MenuCommand < Window_Command
+  #--------------------------------------------------------------------------
+  # ● コマンドリストの作成
+  #--------------------------------------------------------------------------
+  alias monnotes_make_command_list make_command_list
+  def make_command_list
+    monnotes_make_command_list
+    add_monnotes_command
+  end
+  #--------------------------------------------------------------------------
+  # ● Add Options Command
+  #--------------------------------------------------------------------------
+  def add_monnotes_command
+    add_command(Vocab::monnotes, :monnotes)
+  end
+  
+end
+
+#==============================================================================
+# ■ Scene_Menu
+#==============================================================================
+class Scene_Menu < Scene_MenuBase
+  #--------------------------------------------------------------------------
+  # ● コマンドウィンドウの作成
+  #--------------------------------------------------------------------------
+  alias monnotes_create_command_window create_command_window
+  def create_command_window
+    monnotes_create_command_window
+    @command_window.set_handler(:monnotes,    method(:call_monnotes))
+  end
+  def call_monnotes
+    SceneManager.call(Scene_MonsterNotes)
+  end
+end

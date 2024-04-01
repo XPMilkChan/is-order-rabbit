@@ -1,0 +1,37 @@
+module ADHIE
+  module PLAYER
+    ACTOR_ID_PRIORITIES = {
+      1 => 2
+    }
+  end
+end
+class Game_Player < Game_Character
+  #--------------------------------------------------------------------------
+  # ● 対応するアクターの取得
+  #--------------------------------------------------------------------------
+  def actor
+    actor_priority_sort[0]
+  end
+  def actor_priority_sort
+    $game_party.battle_members.sort! { |a, b| priority(b) - priority(a) }
+  end
+  def priority(actor)
+    p = ADHIE::PLAYER::ACTOR_ID_PRIORITIES[actor.id]
+    p ? p : 0
+  end
+end
+class Game_Follower < Game_Character
+  #--------------------------------------------------------------------------
+  # ● 対応するアクターの取得
+  #--------------------------------------------------------------------------
+  def actor
+    actor_priority_sort[@member_index]
+  end
+  def actor_priority_sort
+    $game_party.battle_members.sort! { |a, b| priority(b) - priority(a) }
+  end
+  def priority(actor)
+    p = ADHIE::PLAYER::ACTOR_ID_PRIORITIES[actor.id]
+    p ? p : 0
+  end
+end

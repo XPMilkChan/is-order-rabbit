@@ -1,0 +1,79 @@
+module ADHIE
+  module FOOTSTEPS
+    SE = ["Footsteps3", 75, 125, 20]
+    COMMENT_TAG = /<footsteps: (\w+), (\d+), (\d+), (\d+)>/
+    MIN_VOLUME_RATE = 0.5
+  end
+end
+
+class Footsteps
+  
+end
+
+class Game_Player < Game_Character
+  
+  alias footsound_increase_steps increase_steps
+  def increase_steps
+    footsound_increase_steps
+    #return unless $game_party.steps % 4 == 0
+    name  = ADHIE::FOOTSTEPS::SE[0]
+    vol   = ADHIE::FOOTSTEPS::SE[1]
+    pitch = ADHIE::FOOTSTEPS::SE[2]
+    rpi   = ADHIE::FOOTSTEPS::SE[3]
+    pitch = (pitch - rpi) + rand(rpi+1)
+    RPG::SE.new(name, vol, pitch).play
+  end
+  
+end
+
+class Game_Event < Game_Character
+  #--------------------------------------------------------------------------
+  # ● Distance To
+  #--------------------------------------------------------------------------
+  def distance_to_player
+    distance_x_from($game_player.x).abs + distance_y_from($game_player.y).abs
+  end
+  
+  #--------------------------------------------------------------------------
+  # ● Setup Page Setting
+  #--------------------------------------------------------------------------                     
+  alias footsound_setup_page_settings setup_page_settings
+  def setup_page_settings
+    footsound_setup_page_settings
+    setup_event_footsteps
+  end
+  
+  #--------------------------------------------------------------------------
+  # ● Setup Event Sensor
+  #--------------------------------------------------------------------------                       
+  def setup_event_footsteps
+    @footsteps = {:name=>"",:vol=>0,:pitch=>0,:rpi=>0} if @footsteps == nil
+    return if @list == nil
+    for command in @list
+      if command.code == 108
+        if command.parameters[0] =~ ADHIE::FOOTSTEPS::COMMENT_TAG
+          @footsteps[:name]  = $1.to_s
+          @footsteps[:vol]   = $2.to_i
+          @footsteps[:pitch] = $3.to_i
+          @footsteps[:rpi]   = $4.to_i
+        end
+      end
+    end
+  end
+  
+  def distance_rate
+    miv = ADHIE::FOOTSTEPS::MIN_VOLUME_RATE
+    return miv + (1.0-miv) * ([[(8 - distance_to_player), 0].max, 5].min.to_f/5)
+  end
+  
+  alias footsound_increase_steps increase_steps
+  def increase_steps
+    footsound_increase_steps
+    name  = @footsteps[:name]
+    vol   = (@footsteps[:vol] * distance_rate).to_i
+    pitch = @footsteps[:pitch]
+    rpi   = @footsteps[:rpi]
+    pitch = (pitch - rpi) + rand(rpi+1)
+    RPG::SE.new(name, vol, pitch).play
+  end
+end

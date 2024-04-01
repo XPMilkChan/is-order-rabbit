@@ -1,0 +1,227 @@
+# Please note that this has been modified slightly (it didn't work otherwise)
+
+=begin
+ Game Custom Data v1.25
+ by AdiktuzMiko
+ --- Date Created: 11/25/2013
+ --- Last Date Updated: 10/09/2014
+ --- Level: Easy
+ 
+ This is a simple script which provides you with the capability of having custom data
+ for your game that is saved outside of the save files. Since it is outside of save 
+ files, it is shared by all. You can even make multiple games share a single custom
+ data file.
+ 
+ You can utilize this for having persistent data between your game/games.
+ 
+ You can specify where to put the custom data file, what name will it have and even
+ what file extension. 
+ 
+==============================================================================
+   ++ Installation ++
+==============================================================================
+ Install this script in the Materials section in your project's
+ script editor.
+ 
+ Modify the ADIK::DATA module to your liking
+ 
+==============================================================================
+   ++ Script Calls ++
+==============================================================================
+ 
+ CustomData.get(key) to get a certain value
+ CustomData.set(key,value) to set the value saved in "key" equal to "value"
+ CustomData.add(key,value) to add value to the current value of the data
+ CustomData.sub(key,value) to subtract value to the current value of the data
+ CustomData.mul(key,value) to multiply the current value of the data by the given value
+ CustomData.div(key,value) to divide the current value of the data by the given value
+ CustomData.push(key,value) to add the given value into an array saved as custom data
+ CustomData.delete(key,value) to remove the given value from an array saved as custom data
+ CustomData.save to save the current contents of custom data
+ 
+ Note: Custom Data is loaded automatically upon running the game
+ 
+==============================================================================
+   ++ Compatibility ++
+==============================================================================
+ This script aliases the following default VXA methods:
+
+   DataManager#load_database
+	 DataManager#load_game
+	 Scene_Title#start
+     DataManager#save_game_without_rescue
+==============================================================================
+   ++ Terms and Conditions ++
+==============================================================================
+
+ Read this: http://lescripts.wordpress.com/terms-and-conditions/
+
+==============================================================================
+
+ 
+=end
+
+module ADIK
+  module DATA
+  
+  # Primary folder where the save data will be placed
+  # based on the default paths in your computer
+  # set to nil if you don't want to use this
+  DATA_PATH = 'CURRENT'
+	
+#~ 	Heres a list of parameters you can set the DATA_PATH into
+#~ 	
+#~ 	AppData = Contains the full path to the Application Data directory of the logged-in user
+#~ 	LOCALAPPDATA = This variable is the temporary files of Applications.
+#~      CURRENT = Folder where the game is run from
+
+#~ 	!!!The following might require your game to run in admin mode!!!
+
+#~ 	ProgramFiles = This variable points to Program Files directory
+#~ 	CommonProgramFiles = This variable points to Common Files directory
+    
+  #Enter each subfolder paths after the primary folder here
+  #The script automatically creates the folder path specified
+
+  FOLDER = ["RPGMaker_GameJolt_API"]
+	 
+  #File name of the custom data file, include file extension
+  FILENAME = "gjdata.data"
+	#Does the system save the custom data every time that you change it
+	AUTOSAVE = true
+  #On this example settings given, the file will be saved into
+  #C:\Users\USER\AppData\Roaming\RPGMaker\Games\Data.rvdata2
+  end
+end
+
+#==============================================================================
+# DO NOT EDIT BELOW THIS LINE
+#==============================================================================
+
+module DataManager
+  
+  class <<self; alias load_database_customdata load_database; end
+  def self.load_database
+    load_database_customdata 
+    if not ADIK::DATA::DATA_PATH == 'CURRENT'
+      @spath = ENV[ADIK::DATA::DATA_PATH] + "\\"
+    else
+      @spath = ""
+    end
+    ADIK::DATA::FOLDER.each do |path|
+      @spath += path + "\\"
+      Dir.mkdir(@spath) if !FileTest.exist?(@spath)
+    end
+    @path = @spath + ADIK::DATA::FILENAME
+    begin
+      load_customdata
+    rescue
+      $adik_custom_data = {}
+      save_customdata
+    end
+  end
+  
+  class <<self; alias load_game_customdata load_game; end
+  def self.load_game(index)
+    if load_game_customdata(index)
+      load_customdata unless ADIK::DATA::AUTOSAVE
+      return true
+    else
+      return false
+    end
+  end
+  
+  def self.customdata_filename
+    return  @path
+  end
+  
+  def self.customdata_file_exists?
+    FileTest.exist?(customdata_filename) 
+  end
+  
+  class <<self; alias save_game_without_rescue_customdata save_game_without_rescue; end
+  def self.save_game_without_rescue(index)
+    save_game_without_rescue_customdata(index)
+    DataManager.save_customdata
+    return true
+  end
+  
+  def self.load_customdata
+    File.open(customdata_filename, "rb") do |file|
+      contents = Marshal.load(file)
+      $adik_custom_data = contents[:adik_custom_data]
+    end
+    return true
+  end
+  
+  def self.save_customdata
+    File.open(customdata_filename, "wb") do |file|
+      contents = {}
+      contents[:adik_custom_data] = $adik_custom_data
+      Marshal.dump(contents, file)
+    end
+    return true
+  end
+  
+end
+
+module CustomData
+
+  def self.get(key)
+    return $adik_custom_data[key]
+  end
+  
+  def self.set(key,value)
+    $adik_custom_data[key] = value
+	DataManager.save_customdata if ADIK::DATA::AUTOSAVE
+  end
+  
+  def self.save
+  	DataManager.save_customdata
+  end
+  
+  def self.add(key,value)
+    $adik_custom_data[key] += value
+	DataManager.save_customdata if ADIK::DATA::AUTOSAVE
+  end
+  
+  def self.sub(key,value)
+    $adik_custom_data[key] -= value
+	DataManager.save_customdata if ADIK::DATA::AUTOSAVE
+  end
+  
+  def self.mul(key,value)
+    $adik_custom_data[key] *= value
+	DataManager.save_customdata if ADIK::DATA::AUTOSAVE
+  end
+  
+  def self.div(key,value)
+    $adik_custom_data[key] /= value
+	DataManager.save_customdata if ADIK::DATA::AUTOSAVE
+  end
+  
+  def self.push(key,value)
+  	$adik_custom_data[key] = [] if $adik_custom_data[key].nil?
+    $adik_custom_data[key].push(value)
+	DataManager.save_customdata if ADIK::DATA::AUTOSAVE
+  end
+  
+  def self.delete(key,value)
+    $adik_custom_data[key].delete(value)
+	DataManager.save_customdata if ADIK::DATA::AUTOSAVE
+  end
+  
+  def self.pushed(key,value)
+  	$adik_custom_data[key] = [] if $adik_custom_data[key].nil?
+    $adik_custom_data[key].include?(value)
+  end
+  
+end
+
+class Scene_Title
+  alias custom_data_start start
+  def start
+   custom_data_start
+   DataManager.load_customdata unless ADIK::DATA::AUTOSAVE
+ end
+end

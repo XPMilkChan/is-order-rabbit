@@ -1,0 +1,31 @@
+module ADHIE
+  module ALIGNMENT
+    MENU = 2
+  end
+end
+class Window_Command < Window_Selectable
+  #--------------------------------------------------------------------------
+  # ● オブジェクト初期化
+  #--------------------------------------------------------------------------
+  alias initialize_default initialize
+  def initialize(x, y, align = 0)
+    @align = align
+    initialize_default(x, y)
+  end
+  #--------------------------------------------------------------------------
+  # ● アライメントの取得
+  #--------------------------------------------------------------------------
+  def alignment
+    return @align
+  end
+end
+
+class Window_MenuCommand < Window_Command
+  #--------------------------------------------------------------------------
+  # ● オブジェクト初期化
+  #--------------------------------------------------------------------------
+  def initialize
+    super(0, 0, ADHIE::ALIGNMENT::MENU)
+    select_last
+  end
+end

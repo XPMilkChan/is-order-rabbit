@@ -1,0 +1,49 @@
+#==============================================================================
+# Game-speed Changer
+#==============================================================================
+module ADHIE
+  module GAMESPEED
+    # 0 > toogle
+    # 1 > press
+    METHOD = 0
+    module INPUT
+      FAST = :F8
+      SLOW = :F7
+    end
+  end
+end
+
+#==============================================================================
+# ■ Scene_Base
+#==============================================================================
+class Scene_Base
+  #--------------------------------------------------------------------------
+  # ● Update
+  #--------------------------------------------------------------------------  
+  alias update_gsc update
+  def update
+    update_gsc
+    update_speed_change
+  end
+  #--------------------------------------------------------------------------
+  # ● Update Speed Change
+  #--------------------------------------------------------------------------  
+  def update_speed_change
+    case ADHIE::GAMESPEED::METHOD
+    when 0
+      if Input.trigger?(ADHIE::GAMESPEED::INPUT::FAST)
+        Graphics.frame_rate = Graphics.frame_rate != 120 ? 120 : 60
+      elsif Input.trigger?(ADHIE::GAMESPEED::INPUT::SLOW)
+        Graphics.frame_rate = Graphics.frame_rate != 30 ? 30 : 60
+      end
+    when 1
+      if Input.press?(ADHIE::GAMESPEED::INPUT::SLOW)
+        Graphics.frame_rate = 30 if Graphics.frame_rate != 30
+      elsif Input.press?(ADHIE::GAMESPEED::INPUT::FAST)
+        Graphics.frame_rate = 120 if Graphics.frame_rate != 120
+      else
+        Graphics.frame_rate = 60 if Graphics.frame_rate != 60
+      end
+    end
+  end
+end

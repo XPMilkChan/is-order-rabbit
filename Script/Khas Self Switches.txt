@@ -1,0 +1,243 @@
+#-------------------------------------------------------------------------------
+# * Khas Self Switches
+#-------------------------------------------------------------------------------
+# * By Khas Arcthunder
+# * Version: 1.0
+# * Released on: 11/09/2012
+#
+# * Blog: http://arcthunder.com/
+# * Forum: http://rgssx.com/
+# * Twitter: http://twitter.com/arcthunder
+# * Youtube: http://youtube.com/user/darkkhas
+#
+#-------------------------------------------------------------------------------
+# Terms of Use | Termos de Uso
+#-------------------------------------------------------------------------------
+# * ENGLISH
+# Read updated terms of use at http://arcthunder.com/terms
+#
+# * PORTUGUES
+# Leia os termos atualizados em http://arcthunder.com/termos
+#
+#-------------------------------------------------------------------------------
+# How to use - English Instructions
+#-------------------------------------------------------------------------------
+# You can use Call Script with the following commands:
+#
+# Switch_Core.toggle(event_id,switch)
+# Toggle a switch. If it's ON, this command will turn it to OFF. And if it's 
+# OFF, this command will turn it to ON. 
+# event_id -> The ID of the event
+# switch -> Can be "A", "B", "C" or "D"
+#
+# Switch_Core.toggle(event_id,switch,map_id)
+# Toggle a switch. If it's ON, this command will turn it to OFF. And if it's 
+# OFF, this command will turn it to ON. 
+# event_id -> The ID of the event
+# switch -> Can be "A", "B", "C" or "D"
+# map_id -> ID of the map
+#
+# Switch_Core.turn_on(event_id,switch)
+# Turn ON command.
+# event_id -> The ID of the event
+# switch -> Can be "A", "B", "C" or "D"
+#
+# Switch_Core.turn_on(event_id,switch,map_id)
+# Turn ON command.
+# event_id -> The ID of the event
+# switch -> Can be "A", "B", "C" or "D"
+# map_id -> ID of the map
+#
+# Switch_Core.turn_off(event_id,switch)
+# Turn OFF command.
+# event_id -> The ID of the event
+# switch -> Can be "A", "B", "C" or "D"
+#
+# Switch_Core.turn_off(event_id,switch,map_id)
+# Turn OFF command.
+# event_id -> The ID of the event
+# switch -> Can be "A", "B", "C" or "D"
+# map_id -> ID of the map
+#
+# Switch_Core.set(event_id,switch,value)
+# Set command. If value is true, it will be turned ON. If value is false,
+# it will be turned OFF.
+# event_id -> The ID of the event
+# switch -> Can be "A", "B", "C" or "D"
+# value -> Can be true or false
+#
+# Switch_Core.set(event_id,switch,value,map_id)
+# Set command. If value is true, it will be turned ON. If value is false,
+# it will be turned OFF.
+# event_id -> The ID of the event
+# switch -> Can be "A", "B", "C" or "D"
+# value -> Can be true or false
+# map_id -> ID of the map
+#
+#-------------------------------------------------------------------------------
+#
+# Switch_Core.toggle_all(event_id)
+# Toggle all the event's self switches.
+# event_id -> The ID of the event
+#
+# Switch_Core.toggle_all(event_id,map_id)
+# Toggle all the event's self switches.
+# event_id -> The ID of the event
+# map_id -> ID of the map
+#
+# Switch_Core.turn_on_all(event_id)
+# Turn ON all the event's self switches.
+# event_id -> The ID of the event
+#
+# Switch_Core.turn_on_all(event_id,map_id)
+# Turn ON all the event's self switches.
+# event_id -> The ID of the event
+# map_id -> ID of the map
+#
+# Switch_Core.turn_off_all(event_id)
+# Turn OFF all the event's self switches.
+# event_id -> The ID of the event
+#
+# Switch_Core.turn_off_all(event_id,map_id)
+# Turn OFF all the event's self switches.
+# event_id -> The ID of the event
+# map_id -> ID of the map
+#
+# Switch_Core.set_all(event_id,value)
+# Set all command. If value is true, all self switches will be turned ON. If  
+# value is false, all self switches will be turned OFF.
+# event_id -> The ID of the event
+# value -> Can be true or false
+#
+# Switch_Core.set_all(event_id,value,map_id)
+# Set all command. If value is true, all self switches will be turned ON. If  
+# value is false, all self switches will be turned OFF.
+# event_id -> The ID of the event
+# value -> Can be true or false
+# map_id -> ID of the map
+#
+#-------------------------------------------------------------------------------
+# Como usar - Instruções em Português
+#-------------------------------------------------------------------------------
+# Você pode usar o Chamar Script com os seguintes comandos:
+#
+# Switch_Core.toggle(event_id,switch)
+# Alterna o switch. Se ele estiver ligado, será então desligado. Se ele estiver
+# ligado, será então desligado.
+# event_id -> O ID do evento
+# switch -> Pode ser "A", "B", "C" ou "D"
+#
+# Switch_Core.toggle(event_id,switch,map_id)
+# Alterna o switch. Se ele estiver ligado, será então desligado. Se ele estiver
+# ligado, será então desligado.
+# event_id -> O ID do evento
+# switch -> Pode ser "A", "B", "C" ou "D"
+# map_id -> ID do Mapa
+#
+# Switch_Core.turn_on(event_id,switch)
+# Comando que liga o switch.
+# event_id -> O ID do evento
+# switch -> Pode ser "A", "B", "C" ou "D"
+#
+# Switch_Core.turn_on(event_id,switch,map_id)
+# Comando que liga o switch.
+# event_id -> O ID do evento
+# switch -> Pode ser "A", "B", "C" ou "D"
+# map_id -> ID do Mapa
+#
+# Switch_Core.turn_off(event_id,switch)
+# Comando que desliga o switch.
+# event_id -> O ID do evento
+# switch -> Pode ser "A", "B", "C" ou "D"
+#
+# Switch_Core.turn_off(event_id,switch,map_id)
+# Comando que desliga o switch.
+# event_id -> O ID do evento
+# switch -> Pode ser "A", "B", "C" ou "D"
+# map_id -> ID do Mapa
+#
+# Switch_Core.set(event_id,switch,value)
+# Comando que ajusta o switch. Se value for true, o switch será ligado. Se
+# value for false, o switch será desligado.
+# event_id -> O ID do evento
+# switch -> Pode ser "A", "B", "C" ou "D"
+# value -> Pode ser true ou false
+#
+# Switch_Core.set(event_id,switch,value,map_id)
+# Comando que ajusta o switch. Se value for true, o switch será ligado. Se
+# value for false, o switch será desligado.
+# event_id -> O ID do evento
+# switch -> Pode ser "A", "B", "C" ou "D"
+# value -> Pode ser true ou false
+# map_id -> ID do Mapa
+#
+#-------------------------------------------------------------------------------
+#
+# Switch_Core.toggle_all(event_id)
+# Alterna todos os switches locais do evento.
+# event_id -> O ID do evento
+#
+# Switch_Core.toggle_all(event_id,map_id)
+# Alterna todos os switches locais do evento.
+# event_id -> O ID do evento
+# map_id -> ID do Mapa
+#
+# Switch_Core.turn_on_all(event_id)
+# Liga todos os switches do evento.
+# event_id -> O ID do evento
+#
+# Switch_Core.turn_on_all(event_id,map_id)
+# Liga todos os switches do evento.
+# event_id -> O ID do evento
+# map_id -> ID do Mapa
+#
+# Switch_Core.turn_off_all(event_id)
+# Desliga todos os switches do evento.
+# event_id -> O ID do evento
+#
+# Switch_Core.turn_off_all(event_id,map_id)
+# Desliga todos os switches do evento.
+# event_id -> O ID do evento
+# map_id -> ID do Mapa
+#
+# Switch_Core.set_all(event_id,value)
+# Ajusta todos os switches do evento.
+# event_id -> O ID do evento
+# value -> Pode ser true ou false
+#
+# Switch_Core.set_all(event_id,value,map_id)
+# Ajusta todos os switches do evento.
+# event_id -> O ID do evento
+# value -> Pode ser true ou false
+# map_id -> ID do Mapa
+#
+#-------------------------------------------------------------------------------
+# Script
+#-------------------------------------------------------------------------------
+module Switch_Core
+  Switch_Array = ["A","B","C","D"]
+  def self.toggle(ei,si,mi=$game_map.map_id)
+    $game_self_switches[[mi,ei,si]] = !$game_self_switches[[mi,ei,si]]
+  end
+  def self.turn_on(ei,si,mi=$game_map.map_id)
+    $game_self_switches[[mi,ei,si]] = true
+  end
+  def self.turn_off(ei,si,mi=$game_map.map_id)
+    $game_self_switches[[mi,ei,si]] = false
+  end
+  def self.set(ei,si,pi,mi=$game_map.map_id)
+    $game_self_switches[[mi,ei,si]] = pi
+  end
+  def self.toggle_all(ei,mi=$game_map.map_id)
+    Switch_Array.each {|key| toggle(ei,key,mi)}
+  end
+  def self.turn_on_all(ei,mi=$game_map.map_id)
+    Switch_Array.each {|key| turn_on(ei,key,mi)}
+  end
+  def self.turn_off_all(ei,mi=$game_map.map_id)
+    Switch_Array.each {|key| turn_off(ei,key,mi)}
+  end
+  def self.set_all(ei,pi,mi=$game_map.map_id)
+    Switch_Array.each {|key| set(ei,key,pi,mi)}
+  end
+end
